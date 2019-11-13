@@ -43,7 +43,7 @@
 
 	<properties>
 		<springdata.jpa>2.3.0.BUILD-SNAPSHOT</springdata.jpa>
-		<hibernate.envers>5.2.11</hibernate.envers>
+		<hibernate.envers>5.4.8</hibernate.envers>
 		<java-module-name>spring.data.envers</java-module-name>
 	</properties>
 
