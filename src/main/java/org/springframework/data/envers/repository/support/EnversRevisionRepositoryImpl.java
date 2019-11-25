@@ -15,32 +15,16 @@
  */
 package org.springframework.data.envers.repository.support;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import javax.persistence.EntityManager;
+import java.util.*;
 
-import org.hibernate.envers.AuditReader;
-import org.hibernate.envers.AuditReaderFactory;
-import org.hibernate.envers.DefaultRevisionEntity;
-import org.hibernate.envers.RevisionNumber;
-import org.hibernate.envers.RevisionTimestamp;
+import org.hibernate.envers.*;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.history.AnnotationRevisionMetadata;
-import org.springframework.data.history.Revision;
-import org.springframework.data.history.RevisionMetadata;
-import org.springframework.data.history.RevisionSort;
-import org.springframework.data.history.Revisions;
+import org.springframework.data.history.*;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.history.RevisionRepository;
@@ -143,7 +127,7 @@ public class EnversRevisionRepositoryImpl<T, ID, N extends Number & Comparable<N
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.history.RevisionRepository#findRevisions(java.io.Serializable, org.springframework.data.domain.Pageable)
 	 */
-	public Page<T> findRevisions(LocalDateTime before, LocalDateTime after, Pageable pageable) {
+	public Page<T> findRevisions(Date before, Date after, Pageable pageable) {
 
 		Class<T> type = entityInformation.getJavaType();
 		AuditReader reader = AuditReaderFactory.get(entityManager);
@@ -223,7 +207,7 @@ public class EnversRevisionRepositoryImpl<T, ID, N extends Number & Comparable<N
 	}
 
 	@SuppressWarnings("unchecked")
-	List<T> getRevisions(Class<T> type, LocalDateTime before, LocalDateTime after, AuditReader reader) {
+	List<T> getRevisions(Class<T> type, Date before, Date after, AuditReader reader) {
 
 		AuditQuery auditQuery = reader
 				.createQuery()
@@ -231,11 +215,11 @@ public class EnversRevisionRepositoryImpl<T, ID, N extends Number & Comparable<N
 
 		if(after != null)
 			auditQuery
-					.add(AuditEntity.revisionProperty("timestamp").lt(after.toEpochSecond(ZoneOffset.UTC)));
+					.add(AuditEntity.revisionProperty("timestamp").lt(after.getTime()));
 
 		if(before != null)
 			auditQuery
-					.add(AuditEntity.revisionProperty("timestamp").gt(before.toEpochSecond(ZoneOffset.UTC)));
+					.add(AuditEntity.revisionProperty("timestamp").gt(before.getTime()));
 
 		return (List<T>) auditQuery.getResultList();
 	}
