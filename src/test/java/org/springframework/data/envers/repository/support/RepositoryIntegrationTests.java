@@ -17,6 +17,8 @@ package org.springframework.data.envers.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -97,6 +99,9 @@ public class RepositoryIntegrationTests {
 			Revisions<Integer, License> revisions = Revisions.of(page.getContent());
 			assertThat(revisions.getLatestRevision()).isEqualTo(it);
 		});
+
+		assertThat(licenseRepository.findRevisions(LocalDateTime.now(ZoneOffset.UTC), null,  PageRequest.of(0, 10))).hasSize(2);
+		assertThat(licenseRepository.findRevisions(null, LocalDateTime.now(ZoneOffset.UTC),  PageRequest.of(0, 10))).hasSize(0);
 	}
 
 	@Test // #1

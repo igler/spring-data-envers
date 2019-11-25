@@ -15,6 +15,8 @@
  */
 package org.springframework.data.envers.repository.support;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +31,8 @@ import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.DefaultRevisionEntity;
 import org.hibernate.envers.RevisionNumber;
 import org.hibernate.envers.RevisionTimestamp;
+import org.hibernate.envers.query.AuditEntity;
+import org.hibernate.envers.query.AuditQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -139,6 +143,28 @@ public class EnversRevisionRepositoryImpl<T, ID, N extends Number & Comparable<N
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.history.RevisionRepository#findRevisions(java.io.Serializable, org.springframework.data.domain.Pageable)
 	 */
+	public Page<T> findRevisions(LocalDateTime before, LocalDateTime after, Pageable pageable) {
+
+		Class<T> type = entityInformation.getJavaType();
+		AuditReader reader = AuditReaderFactory.get(entityManager);
+		List<T> results = getRevisions(type, before, after, reader);
+		boolean isDescending = RevisionSort.getRevisionDirection(pageable.getSort()).isDescending();
+
+		if (isDescending)
+			Collections.reverse(results);
+
+		long upperBound = pageable.getOffset() + pageable.getPageSize();
+		upperBound = upperBound > results.size() ? results.size() : upperBound;
+
+		List<T> subList = results.subList(toInt(pageable.getOffset()), toInt(upperBound));
+
+		return new PageImpl<>(subList, pageable, results.size());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.history.RevisionRepository#findRevisions(java.io.Serializable, org.springframework.data.domain.Pageable)
+	 */
 	@SuppressWarnings("unchecked")
 	public Page<Revision<N, T>> findRevisions(ID id, Pageable pageable) {
 
@@ -194,6 +220,24 @@ public class EnversRevisionRepositoryImpl<T, ID, N extends Number & Comparable<N
 		}
 
 		return Revisions.of(toRevisions(revisions, revisionEntities));
+	}
+
+	@SuppressWarnings("unchecked")
+	List<T> getRevisions(Class<T> type, LocalDateTime before, LocalDateTime after, AuditReader reader) {
+
+		AuditQuery auditQuery = reader
+				.createQuery()
+				.forRevisionsOfEntity(type, true, true);
+
+		if(after != null)
+			auditQuery
+					.add(AuditEntity.revisionProperty("timestamp").lt(after.toEpochSecond(ZoneOffset.UTC)));
+
+		if(before != null)
+			auditQuery
+					.add(AuditEntity.revisionProperty("timestamp").gt(before.toEpochSecond(ZoneOffset.UTC)));
+
+		return (List<T>) auditQuery.getResultList();
 	}
 
 	/**

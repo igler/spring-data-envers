@@ -16,7 +16,10 @@
 package org.springframework.data.envers.repository.support;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.history.RevisionRepository;
@@ -34,4 +37,5 @@ import org.springframework.data.repository.history.RevisionRepository;
 public interface EnversRevisionRepository<T, ID extends Serializable, N extends Number & Comparable<N>>
 		extends RevisionRepository<T, ID, N>, JpaRepository<T, ID> {
 
+	Page<T> findRevisions(LocalDateTime before, LocalDateTime after, Pageable pageable);
 }
